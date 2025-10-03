@@ -1,6 +1,7 @@
 "use client";
 import React from "react";
 import Link from "next/link";
+import Image from "next/image";
 import Service from "@/components/Case_study/Service";
 import CasestudyContact from "@/components/Case_study/Case_study_contact";
 
@@ -23,14 +24,14 @@ export default function CaseStudyHero() {
             </p>
 
             <div className="mt-8 sm:mt-10">
-              <a
-                href="/#contact"
-                className="inline-block bg-blue-950 text-white px-6 sm:px-8 py-3 sm:py-4 text-sm sm:text-base md:text-lg font-normal 
-                         transition-all duration-300 ease-in-out 
-                         hover:-translate-y-1 hover:scale-105 hover:bg-blue-950 active:scale-95"
-              >
-                Contact Our Team
-              </a>
+            <Link
+  href="/#contact"
+  className="inline-block bg-blue-950 text-white px-6 sm:px-8 py-3 sm:py-4 text-sm sm:text-base md:text-lg font-normal 
+         transition-all duration-300 ease-in-out 
+         hover:-translate-y-1 hover:scale-105 hover:bg-blue-950 active:scale-95"
+>
+  Contact Our Team
+</Link>
             </div>
           </div>
         </div>
@@ -60,12 +61,12 @@ export default function CaseStudyHero() {
 
         <p className="text-gray-700 text-base sm:text-lg md:text-lg leading-relaxed">
           Want to learn how these solutions can be tailored to your business?{" "}
-          <a
+          <Link
             href="/#contact"
             className="text-blue-600 hover:text-blue-800 transition-colors"
           >
             Contact our team
-          </a>{" "}
+          </Link>{" "}
           for a personalized consultation and discover how GPS technology can
           strengthen your fleet’s security and performance.
         </p>
@@ -110,11 +111,13 @@ export default function CaseStudyHero() {
           </p>
 
           <div className="mt-8 sm:mt-10 mb-2 sm:mb-10">
-            <img
-              className="w-full max-w-3xl mx-auto object-cover"
-              alt="GPS fleet security system"
-              src="/image/client.jpg"
-            />
+          <Image
+  src="/image/client.jpg"
+  alt="GPS fleet security system"
+  width={1200}  // approximate width
+  height={800}  // approximate height
+  className="w-full max-w-3xl mx-auto object-cover"
+/>
           </div>
         </div>
 
