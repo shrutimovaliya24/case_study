@@ -1,11 +1,11 @@
 import React from "react";
 import Header from "@/common/Header";
 import Footer from "@/common/Footer";
-import Home from "@/components/Home";
-import Problem from "@/components/Problem";
-import Solution from "@/components/Solution";
-import Result from "@/components/Result";
-import Contact from "@/components/Contact";
+import Home from "@/components/Case_study/Home";
+import Problem from "@/components/Case_study/Problem";
+import Solution from "@/components/Case_study/Solution";
+import Result from "@/components/Case_study/Result";
+import Contact from "@/components/Case_study/Contact";
 
 export default function AboutPage() {
   return (
