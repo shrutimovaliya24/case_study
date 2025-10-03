@@ -4,15 +4,19 @@ import { Disclosure, DisclosureButton, DisclosurePanel } from '@headlessui/react
 import { Bars3Icon } from '@heroicons/react/24/outline'
 import { SquareChevronRight } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion";
+import Link from "next/link";
 
 
 const navigation = [
-  { name: 'Home', href: '#home', current: false },
-  { name: 'Problem', href: '#problem', current: false },
-  { name: 'Solution', href: '#solution', current: false },
-  { name: 'Result', href: '#result', current: false },
-  { name: 'Contact', href: '#contact', current: false },
-]
+  { name: "Home", href: "/#home" },
+
+  { name: "Problem", href: "/#problem" },
+  { name: "Solution", href: "/#solution" },
+  { name: "Result", href: "/#result" },
+  { name: "Contact", href: "/#contact" },
+  { name: "Case Studies", href: "/casestudies" },
+];
+
 
 function classNames(...classes) {
   return classes.filter(Boolean).join(' ')
@@ -35,7 +39,7 @@ export default function Example() {
               <div className="hidden sm:block">
                 <div className="flex space-x-4">
                   {navigation.map((item) => (
-                    <a
+                    <Link
                       key={item.name}
                       href={item.href}
                       className={classNames(
@@ -46,7 +50,7 @@ export default function Example() {
                       )}
                     >
                       {item.name}
-                    </a>
+                    </Link>
                   ))}
                 </div>
               </div>
@@ -78,7 +82,7 @@ export default function Example() {
                   {navigation.map((item, i) => (
                     <DisclosureButton
                       key={item.name}
-                      as="a"
+                      as={Link}
                       href={item.href}
                       className={classNames(
                         "text-blue-950 hover:bg-gray-100 block rounded-md px-3 py-2 text-base font-medium"
