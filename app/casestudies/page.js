@@ -1,11 +1,15 @@
 "use client";
-import React from "react";
+import React,{useState} from "react";
 import Link from "next/link";
 import Image from "next/image";
 import Service from "@/components/Case_study/Service";
 import CasestudyContact from "@/components/Case_study/Case_study_contact";
+import Blog from "@/components/Case_study/Blog/Blog";
+import SearchBlog from "@/components/Case_study/Blog/SearchbBlog";
 
 export default function CaseStudyHero() {
+  const [selectedTopic, setSelectedTopic] = useState("All Topics");
+
   return (
     <>
       <section className="relative w-full min-h-screen flex py-12 md:py-16 lg:py-20 px-4 sm:px-6 items-center">
@@ -24,14 +28,14 @@ export default function CaseStudyHero() {
             </p>
 
             <div className="mt-8 sm:mt-10">
-            <Link
-  href="/#contact"
-  className="inline-block bg-blue-950 text-white px-6 sm:px-8 py-3 sm:py-4 text-sm sm:text-base md:text-lg font-normal 
+              <Link
+                href="/#contact"
+                className="inline-block bg-blue-950 text-white px-6 sm:px-8 py-3 sm:py-4 text-sm sm:text-base md:text-lg font-normal 
          transition-all duration-300 ease-in-out 
          hover:-translate-y-1 hover:scale-105 hover:bg-blue-950 active:scale-95"
->
-  Contact Our Team
-</Link>
+              >
+                Contact Our Team
+              </Link>
             </div>
           </div>
         </div>
@@ -72,13 +76,9 @@ export default function CaseStudyHero() {
         </p>
       </section>
 
-      <section className="container max-w-full mx-auto px-4 sm:px-6">
-        <div className="bg-gray-100 py-12 sm:py-16 md:py-20 px-4 sm:px-6 md:px-12 text-center">
-          <h3 className="text-xl sm:text-2xl md:text-3xl font-semibold text-gray-800">
-            Blog Section
-          </h3>
-          <p className="text-gray-600 mt-2 text-sm sm:text-base"></p>
-        </div>
+      <section className="container max-w-full mx-auto  ">
+      <SearchBlog onTopicChange={setSelectedTopic} />
+      <Blog selectedTopic={selectedTopic} />
       </section>
 
       <section className="bg-white ">
@@ -111,13 +111,13 @@ export default function CaseStudyHero() {
           </p>
 
           <div className="mt-8 sm:mt-10 mb-2 sm:mb-10">
-          <Image
-  src="/image/client.jpg"
-  alt="GPS fleet security system"
-  width={1200}  // approximate width
-  height={800}  // approximate height
-  className="w-full max-w-3xl mx-auto object-cover"
-/>
+            <Image
+              src="/image/client.jpg"
+              alt="GPS fleet security system"
+              width={1200}
+              height={800}
+              className="w-full max-w-3xl mx-auto object-cover"
+            />
           </div>
         </div>
 
