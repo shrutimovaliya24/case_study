@@ -10,90 +10,117 @@ export default function Blog({ selectedTopic, searchTerm }) {
   // Check if user is actively searching
   const isSearching = searchTerm && searchTerm.trim().length > 0;
 
-  // SMART SEARCH FUNCTION with advanced features
   const smartSearch = (blogs, search, topic) => {
     let results = [...blogs];
-
-    // 1. Filter by topic first
+  
+    // 1️⃣ Filter by selected topic
     if (topic && topic !== "All Topics") {
       results = results.filter(
         (blog) => blog.category.toLowerCase() === topic.toLowerCase()
       );
     }
-
-    // 2. Smart search with multiple features
+  
     if (search && search.trim()) {
       const searchLower = search.toLowerCase().trim();
-      
+  
+      // 🔹 Normalize helper
+      const normalize = (str) =>
+        str.toLowerCase().replace(/&/g, "and").replace(/\s+/g, " ").trim();
+  
+      // 🔹 Exact or partial category match
+      const exactCategoryMatch = results.filter((blog) => {
+        const normalizedCategory = normalize(blog.category);
+        const normalizedSearch = normalize(searchLower);
+        return (
+          normalizedCategory === normalizedSearch ||
+          normalizedSearch.includes(normalizedCategory)
+        );
+      });
+  
+      if (exactCategoryMatch.length > 0) return exactCategoryMatch;
+  
+      // 🔹 Smart search filtering
       results = results.filter((blog) => {
         const title = blog.title.toLowerCase();
         const excerpt = blog.excerpt.toLowerCase();
         const category = blog.category.toLowerCase();
-        
-        // Feature 1: Exact phrase match (highest priority)
-        if (title.includes(searchLower) || 
-            excerpt.includes(searchLower) || 
-            category.includes(searchLower)) {
+  
+        // ✅ 1️⃣ Full exact match (normalized)
+        if (
+          normalize(title) === normalize(searchLower) ||
+          normalize(excerpt) === normalize(searchLower) ||
+          normalize(category) === normalize(searchLower)
+        ) {
           return true;
         }
-
-        // Feature 2: Multi-word search (all words must match somewhere)
-        const words = searchLower.split(/\s+/).filter(w => w.length > 0);
+  
+        // ✅ 2️⃣ Exact phrase match
+        if (
+          title.includes(searchLower) ||
+          excerpt.includes(searchLower) ||
+          category.includes(searchLower)
+        ) {
+          return true;
+        }
+  
+        // ✅ 3️⃣ Multi-word match
+        const words = searchLower.split(/\s+/).filter((w) => w.length > 0);
         if (words.length > 1) {
-          const allWordsMatch = words.every(word => 
-            title.includes(word) || 
-            excerpt.includes(word) || 
-            category.includes(word)
+          const allWordsMatch = words.every(
+            (word) =>
+              title.includes(word) ||
+              excerpt.includes(word) ||
+              category.includes(word)
           );
           if (allWordsMatch) return true;
         }
-
-        // Feature 3: Partial word matching (typo tolerance)
-        const partialMatch = words.some(word => {
-          if (word.length >= 3) { // Only for words 3+ characters
-            return title.includes(word) || 
-                   excerpt.includes(word) || 
-                   category.includes(word);
+  
+        // ✅ 4️⃣ Partial (typo-tolerant) match
+        const partialMatch = words.some((word) => {
+          if (word.length >= 3) {
+            return (
+              title.includes(word) ||
+              excerpt.includes(word) ||
+              category.includes(word)
+            );
           }
           return false;
         });
-
+  
         return partialMatch;
       });
-
-      // Feature 4: Relevance scoring and sorting
-      results = results.map(blog => {
+  
+      console.log("Search:", search, "Topic:", topic, "Result Count:", results.length);
+  
+      // 🔹 Relevance scoring
+      results = results.map((blog) => {
         let score = 0;
         const title = blog.title.toLowerCase();
         const excerpt = blog.excerpt.toLowerCase();
         const category = blog.category.toLowerCase();
-
-        // Exact match in title = highest score
+  
         if (title.includes(searchLower)) score += 10;
-        
-        // Exact match in category = high score
         if (category.includes(searchLower)) score += 8;
-        
-        // Exact match in excerpt = medium score
         if (excerpt.includes(searchLower)) score += 5;
-
-        // Word matches
-        const words = searchLower.split(/\s+/).filter(w => w.length > 0);
-        words.forEach(word => {
+  
+        const words = searchLower.split(/\s+/).filter((w) => w.length > 0);
+        words.forEach((word) => {
           if (title.includes(word)) score += 3;
           if (category.includes(word)) score += 2;
           if (excerpt.includes(word)) score += 1;
         });
-
+  
         return { ...blog, relevanceScore: score };
       });
-
-      // Sort by relevance score (highest first)
+  
       results.sort((a, b) => b.relevanceScore - a.relevanceScore);
     }
-
+  
     return results;
   };
+  
+  
+  
 
   useEffect(() => {
     const results = smartSearch(staticBlogs, searchTerm, selectedTopic);
