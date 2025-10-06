@@ -9,6 +9,7 @@ import SearchBlog from "@/components/Case_study/Blog/SearchbBlog";
 
 export default function CaseStudyHero() {
   const [selectedTopic, setSelectedTopic] = useState("All Topics");
+  const [searchTerm, setSearchTerm] = useState("");
 
   return (
     <>
@@ -77,8 +78,19 @@ export default function CaseStudyHero() {
       </section>
 
       <section className="container max-w-full mx-auto  ">
-      <SearchBlog onTopicChange={setSelectedTopic} />
-      <Blog selectedTopic={selectedTopic} />
+      <div>
+      {/* Search and Filter Section */}
+      <SearchBlog 
+        onTopicChange={setSelectedTopic}
+        onSearchChange={setSearchTerm}
+      />
+      
+      {/* Blog Display Section */}
+      <Blog 
+        selectedTopic={selectedTopic}
+        searchTerm={searchTerm}
+      />
+    </div>
       </section>
 
       <section className="bg-white ">

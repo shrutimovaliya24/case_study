@@ -1,9 +1,10 @@
 import React, { useState, useRef, useEffect } from "react";
-import { ChevronDown, Search } from "lucide-react";
+import { ChevronDown, Search, X } from "lucide-react";
 
-export default function SearchBlog({ onTopicChange }) {
+export default function SearchBlog({ onTopicChange, onSearchChange }) {
   const [isOpen, setIsOpen] = useState(false);
   const [selectedTopic, setSelectedTopic] = useState("All Topics");
+  const [searchTerm, setSearchTerm] = useState("");
   const dropdownRef = useRef(null);
 
   useEffect(() => {
@@ -36,17 +37,31 @@ export default function SearchBlog({ onTopicChange }) {
   const handleTopicSelect = (topic) => {
     setSelectedTopic(topic);
     setIsOpen(false);
-    if (onTopicChange) onTopicChange(topic);
+    if (onTopicChange) {
+      onTopicChange(topic);
+    }
   };
-  
+
+  const handleSearchChange = (e) => {
+    const value = e.target.value;
+    setSearchTerm(value);
+    if (onSearchChange) {
+      onSearchChange(value);
+    }
+  };
+
+  const clearSearch = () => {
+    setSearchTerm("");
+    if (onSearchChange) {
+      onSearchChange("");
+    }
+  };
 
   return (
     <section className="w-full bg-gray-50 py-2 sm:py-4 md:py-8 lg:py-10">
       <div className="container mx-auto px-4 sm:px-6 lg:px-10">
-        
         <div className="flex flex-col md:flex-row md:justify-between gap-4 sm:gap-5">
-          
-        
+          {/* Topic Dropdown */}
           <div ref={dropdownRef} className="relative w-full md:w-auto md:flex-shrink-0">
             <button
               onClick={() => setIsOpen(!isOpen)}
@@ -100,16 +115,18 @@ export default function SearchBlog({ onTopicChange }) {
             )}
           </div>
 
-         
+          {/* Search Input */}
           <div className="relative w-full md:w-[300px] lg:w-[400px] md:flex-shrink-0">
             <input
               name="term"
               type="text"
-              placeholder="Search the blog"
+              value={searchTerm}
+              onChange={handleSearchChange}
+              placeholder="Search the Blog"
               className="w-full 
                          px-5 sm:px-6 md:px-7 lg:px-8
                          py-3 sm:py-3.5 md:py-4
-                         pr-12 shadow-md
+                         pr-20 shadow-md
                          text-sm sm:text-base md:text-lg
                          bg-white
                          placeholder:text-gray-400
@@ -117,11 +134,20 @@ export default function SearchBlog({ onTopicChange }) {
                          focus:border-gray-400
                          transition-colors duration-200"
             />
-            <Search 
-              className="absolute right-4 sm:right-5 md:right-6 lg:right-7 top-1/2 -translate-y-1/2 
-                         h-4 w-4 sm:h-5 sm:w-5
-                         text-black                        pointer-events-none" 
-            />
+            <div className="absolute right-4 sm:right-5 md:right-6 lg:right-7 top-1/2 -translate-y-1/2 flex items-center gap-2">
+              {searchTerm && (
+                <button
+                  onClick={clearSearch}
+                  className="text-gray-400 hover:text-gray-600 transition-colors"
+                  aria-label="Clear search"
+                >
+                  <X className="h-4 w-4 sm:h-5 sm:w-5" />
+                </button>
+              )}
+              <Search 
+                className="h-4 w-4 sm:h-5 sm:w-5 text-black pointer-events-none" 
+              />
+            </div>
           </div>
         </div>
       </div>
