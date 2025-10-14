@@ -1,6 +1,5 @@
-
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import BlogGrid from "./BlogGrid";
 import { staticBlogs } from "./blogData";
 
@@ -8,7 +7,12 @@ export default function Blog({ selectedTopic, searchTerm }) {
   const [blogs, setBlogs] = useState(staticBlogs);
   const [filteredBlogs, setFilteredBlogs] = useState(staticBlogs);
   const [visibleCount, setVisibleCount] = useState(3);
+  
+  // ✅ Track used categories and topics to prevent repeats
+  const usedCategories = useRef(new Set());
+  const usedTopics = useRef(new Set());
 
+  // ✅ Blog categories
   const availableCategories = [
     "GPS Technology",
     "Fleet Security & Anti-Theft",
@@ -24,64 +28,115 @@ export default function Blog({ selectedTopic, searchTerm }) {
     "Future of Fleet Management",
   ];
 
-  // Unique ID for new blogs
+  // ✅ Initialize used categories from existing blogs
+  useEffect(() => {
+    blogs.forEach(blog => {
+      usedCategories.current.add(blog.category);
+      // Create a simple identifier for the topic (first 50 chars of title)
+      const topicKey = blog.title.substring(0, 50).toLowerCase();
+      usedTopics.current.add(topicKey);
+    });
+  }, []);
+
+  // ✅ Get unused category
+  const getUnusedCategory = () => {
+    const unusedCategories = availableCategories.filter(
+      cat => !usedCategories.current.has(cat)
+    );
+
+    // If all categories used, reset and start over
+    if (unusedCategories.length === 0) {
+      usedCategories.current.clear();
+      return availableCategories[Math.floor(Math.random() * availableCategories.length)];
+    }
+
+    // Pick random unused category
+    return unusedCategories[Math.floor(Math.random() * unusedCategories.length)];
+  };
+
+  // ✅ Check if topic is unique
+  const isTopicUnique = (title) => {
+    const topicKey = title.substring(0, 50).toLowerCase();
+    return !usedTopics.current.has(topicKey);
+  };
+
+  // ✅ Unique ID for new blogs
   const generateUniqueId = () =>
     `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
-  // Generate AI Blog via API route
-  const generateAIBlog = async (topic) => {
+  const generateAIBlog = async (category) => {
     try {
       const res = await fetch("/api/generate-blog", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ topic }),
+        body: JSON.stringify({ topic: category }),
       });
 
-      if (!res.ok) throw new Error(`API Error: ${res.status}`);
+      if (!res.ok) throw new Error("API Error");
 
       const data = await res.json();
 
+      // ✅ Ensure we ALWAYS have a valid image URL
+      const imageUrl = data?.image && data.image !== "null" && data.image !== null
+        ? data.image
+        : `https://picsum.photos/800/600?random=${Date.now()}`;
+
       return {
-        title: data.title,
-        excerpt: data.excerpt,
-        image: `/image/cs${Math.floor(Math.random() * 12) + 1}.jpg`,
+        title: data?.title || `${category} - AI Blog`,
+        excerpt:
+          data?.excerpt ||
+          "AI-generated content about fleet management and GPS technology.",
+        image: imageUrl,
       };
     } catch (err) {
-      // Fallback content
+      console.error("Generate AI Blog Error:", err);
+      const timestamp = Date.now();
       return {
-        title: `${topic} - Latest Insights`,
-        excerpt:
-          "Exploring innovative solutions in fleet management technology and how they improve operational efficiency.",
-        image: `/image/cs${Math.floor(Math.random() * 12) + 1}.jpg`,
+        title: `${category} - AI Blog`,
+        excerpt: "Exploring innovative solutions in fleet management.",
+        image: `https://picsum.photos/800/600?random=${timestamp}`,
       };
     }
   };
 
-  // Auto-generate AI blog at interval (e.g., 30 min = 1800000 ms)
+  // ✅ Auto-generate AI blog every 30 seconds (or 5 minutes: 300000)
   useEffect(() => {
     const interval = setInterval(async () => {
-      const randomCategory =
-        availableCategories[Math.floor(Math.random() * availableCategories.length)];
+      // Get unused category
+      const selectedCategory = getUnusedCategory();
 
-      const aiBlog = await generateAIBlog(randomCategory);
+      // Generate blog
+      const aiBlog = await generateAIBlog(selectedCategory);
 
-      const newBlog = {
-        id: generateUniqueId(),
-        title: aiBlog.title,
-        excerpt: aiBlog.excerpt,
-        category: randomCategory,
-        image: aiBlog.image,
-        date: new Date().toISOString(),
-        isAI: true,
-      };
+      // ✅ Check if topic is unique before adding
+      if (isTopicUnique(aiBlog.title)) {
+        const newBlog = {
+          id: generateUniqueId(),
+          title: aiBlog.title,
+          excerpt: aiBlog.excerpt,
+          category: selectedCategory,
+          image: aiBlog.image,
+          date: new Date().toISOString(),
+          isAI: true,
+        };
+
+        // Mark category and topic as used
+        usedCategories.current.add(selectedCategory);
+        const topicKey = aiBlog.title.substring(0, 50).toLowerCase();
+        usedTopics.current.add(topicKey);
 
         setBlogs((prev) => [newBlog, ...prev]);
-      }, 300000); // 30 minutes
+        
+        console.log(`✅ Generated unique blog for: ${selectedCategory}`);
+      } else {
+        console.log(`⚠️ Duplicate topic detected, skipping...`);
+      }
+    }, 30000); // 30 seconds for testing, change to 300000 for 5 minutes
 
     return () => clearInterval(interval);
   }, []);
 
-  // Smart search & filtering
+  // ✅ Smart search & filtering
   const smartSearch = (blogs, search, topic) => {
     let results = [...blogs];
 
@@ -104,7 +159,7 @@ export default function Blog({ selectedTopic, searchTerm }) {
     return results;
   };
 
-  // Re-filter on blogs/search/topic change
+  // ✅ Re-filter when blogs, search, or topic changes
   useEffect(() => {
     const results = smartSearch(blogs, searchTerm, selectedTopic);
     setFilteredBlogs(results);
@@ -124,12 +179,18 @@ export default function Blog({ selectedTopic, searchTerm }) {
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-2xl font-bold text-gray-900">Our Blogs</h2>
           <div className="flex items-center gap-2 text-sm text-gray-600">
-           
+            {selectedTopic && selectedTopic !== "All Topics" && (
+              <span className="bg-gray-100 px-3 py-1 rounded-full text-xs">
+                {selectedTopic}
+              </span>
+            )}
           </div>
         </div>
 
         {filteredBlogs.length === 0 ? (
-          <div className="text-center py-16 text-gray-600">No blogs found.</div>
+          <div className="text-center py-16 text-gray-600">
+            No blogs found.
+          </div>
         ) : (
           <>
             <BlogGrid blogs={visibleBlogs} />
@@ -137,7 +198,7 @@ export default function Blog({ selectedTopic, searchTerm }) {
               <div className="text-center mt-10">
                 <button
                   onClick={handleLoadMore}
-                  className="border border-blue-950 px-8 py-3 font-medium text-blue-950 hover:bg-blue-950 hover:text-white transition-all"
+                  className="border border-blue-950 px-8 py-3 font-medium text-blue-950 hover:bg-blue-950 hover:text-white transition-all rounded-lg"
                 >
                   Load More
                 </button>
@@ -148,4 +209,4 @@ export default function Blog({ selectedTopic, searchTerm }) {
       </div>
     </section>
   );
-} 
+}
