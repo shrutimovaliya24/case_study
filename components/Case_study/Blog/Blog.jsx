@@ -7,142 +7,79 @@ export default function Blog({ selectedTopic, searchTerm }) {
   const [blogs, setBlogs] = useState(staticBlogs);
   const [filteredBlogs, setFilteredBlogs] = useState(staticBlogs);
   const [visibleCount, setVisibleCount] = useState(3);
-  
-  // ✅ Track used categories and topics to prevent repeats
-  const usedCategories = useRef(new Set());
+
+  // ✅ Track used titles to prevent duplicates
   const usedTopics = useRef(new Set());
 
-  // ✅ Blog categories
-  const availableCategories = [
-    "GPS Technology",
-    "Fleet Security & Anti-Theft",
-    "Real-Time Tracking",
-    "Driver Behavior & Safety",
-    "Telematics & IoT",
-    "Route Optimization",
-    "Asset & Cargo Monitoring",
-    "Industry Case Studies",
-    "Compliance & Regulations",
-    "AI & Predictive Analytics",
-    "Cost Optimization Strategies",
-    "Future of Fleet Management",
-  ];
-
-  // ✅ Initialize used categories from existing blogs
+  // Initialize used topics
   useEffect(() => {
     blogs.forEach(blog => {
-      usedCategories.current.add(blog.category);
-      // Create a simple identifier for the topic (first 50 chars of title)
-      const topicKey = blog.title.substring(0, 50).toLowerCase();
-      usedTopics.current.add(topicKey);
+      usedTopics.current.add(blog.title.substring(0, 50).toLowerCase());
     });
   }, []);
 
-  // ✅ Get unused category
-  const getUnusedCategory = () => {
-    const unusedCategories = availableCategories.filter(
-      cat => !usedCategories.current.has(cat)
-    );
-
-    // If all categories used, reset and start over
-    if (unusedCategories.length === 0) {
-      usedCategories.current.clear();
-      return availableCategories[Math.floor(Math.random() * availableCategories.length)];
-    }
-
-    // Pick random unused category
-    return unusedCategories[Math.floor(Math.random() * unusedCategories.length)];
-  };
-
-  // ✅ Check if topic is unique
+  // ✅ Check if new blog is unique
   const isTopicUnique = (title) => {
     const topicKey = title.substring(0, 50).toLowerCase();
     return !usedTopics.current.has(topicKey);
   };
 
-  // ✅ Unique ID for new blogs
+  // ✅ Generate a unique ID
   const generateUniqueId = () =>
     `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
-  const generateAIBlog = async (category) => {
-    try {
-      const res = await fetch("/api/generate-blog", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ topic: category }),
-      });
+  // ✅ Request AI-generated blog
+  const generateAIBlog = async () => {
+    const res = await fetch("/api/generate-blog", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ topic: "fleet management" }),
+    });
 
-      if (!res.ok) throw new Error("API Error");
+    const data = await res.json();
 
-      const data = await res.json();
-
-      // ✅ Ensure we ALWAYS have a valid image URL
-      const imageUrl = data?.image && data.image !== "null" && data.image !== null
-        ? data.image
-        : `https://picsum.photos/800/600?random=${Date.now()}`;
-
-      return {
-        title: data?.title || `${category} - AI Blog`,
-        excerpt:
-          data?.excerpt ||
-          "AI-generated content about fleet management and GPS technology.",
-        image: imageUrl,
-      };
-    } catch (err) {
-      console.error("Generate AI Blog Error:", err);
-      const timestamp = Date.now();
-      return {
-        title: `${category} - AI Blog`,
-        excerpt: "Exploring innovative solutions in fleet management.",
-        image: `https://picsum.photos/800/600?random=${timestamp}`,
-      };
-    }
+    return {
+      title: data.title,
+      excerpt: data.excerpt,
+      category: data.category,
+      image: data.image,
+    };
   };
 
-  // ✅ Auto-generate AI blog every 30 seconds (or 5 minutes: 300000)
+  // ✅ Auto-generate new unique blog periodically
   useEffect(() => {
     const interval = setInterval(async () => {
-      // Get unused category
-      const selectedCategory = getUnusedCategory();
+      const aiBlog = await generateAIBlog();
 
-      // Generate blog
-      const aiBlog = await generateAIBlog(selectedCategory);
-
-      // ✅ Check if topic is unique before adding
-      if (isTopicUnique(aiBlog.title)) {
+      if (aiBlog?.title && isTopicUnique(aiBlog.title)) {
         const newBlog = {
           id: generateUniqueId(),
           title: aiBlog.title,
           excerpt: aiBlog.excerpt,
-          category: selectedCategory,
+          category: aiBlog.category,
           image: aiBlog.image,
           date: new Date().toISOString(),
           isAI: true,
         };
 
-        // Mark category and topic as used
-        usedCategories.current.add(selectedCategory);
-        const topicKey = aiBlog.title.substring(0, 50).toLowerCase();
-        usedTopics.current.add(topicKey);
-
+        usedTopics.current.add(aiBlog.title.substring(0, 50).toLowerCase());
         setBlogs((prev) => [newBlog, ...prev]);
-        
-        console.log(`✅ Generated unique blog for: ${selectedCategory}`);
+        console.log(`✅ Added new unique AI blog: ${aiBlog.title}`);
       } else {
-        console.log(`⚠️ Duplicate topic detected, skipping...`);
+        console.log("⚠️ Skipped duplicate AI blog");
       }
-    }, 30000); // 30 seconds for testing, change to 300000 for 5 minutes
+    }, 30000); // every 30 seconds — change to 300000 (5 min) for production
 
     return () => clearInterval(interval);
   }, []);
 
-  // ✅ Smart search & filtering
+  // ✅ Smart search and filter
   const smartSearch = (blogs, search, topic) => {
     let results = [...blogs];
 
     if (topic && topic !== "All Topics") {
       results = results.filter(
-        (blog) => blog.category.toLowerCase() === topic.toLowerCase()
+        (blog) => blog.category?.toLowerCase() === topic.toLowerCase()
       );
     }
 
@@ -159,7 +96,7 @@ export default function Blog({ selectedTopic, searchTerm }) {
     return results;
   };
 
-  // ✅ Re-filter when blogs, search, or topic changes
+  // ✅ Filter blogs when inputs change
   useEffect(() => {
     const results = smartSearch(blogs, searchTerm, selectedTopic);
     setFilteredBlogs(results);
@@ -178,19 +115,17 @@ export default function Blog({ selectedTopic, searchTerm }) {
       <div className="container mx-auto">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-2xl font-bold text-gray-900">Our Blogs</h2>
-          <div className="flex items-center gap-2 text-sm text-gray-600">
-            {selectedTopic && selectedTopic !== "All Topics" && (
+          {selectedTopic && selectedTopic !== "All Topics" && (
+            <div className="flex items-center gap-2 text-sm text-gray-600">
               <span className="bg-gray-100 px-3 py-1 rounded-full text-xs">
                 {selectedTopic}
               </span>
-            )}
-          </div>
+            </div>
+          )}
         </div>
 
         {filteredBlogs.length === 0 ? (
-          <div className="text-center py-16 text-gray-600">
-            No blogs found.
-          </div>
+          <div className="text-center py-16 text-gray-600">No blogs found.</div>
         ) : (
           <>
             <BlogGrid blogs={visibleBlogs} />
