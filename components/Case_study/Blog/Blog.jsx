@@ -75,8 +75,8 @@ export default function Blog({ selectedTopic, searchTerm }) {
         isAI: true,
       };
 
-      setBlogs((prev) => [newBlog, ...prev]);
-    }, 18000000); // 30 minutes
+        setBlogs((prev) => [newBlog, ...prev]);
+      }, 300000); // 30 minutes
 
     return () => clearInterval(interval);
   }, []);
